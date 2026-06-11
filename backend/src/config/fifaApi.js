@@ -140,13 +140,14 @@ var fifaApi = {
       // Fetch today's matches — football-data.org free tier doesn't support
       // comma-separated status, so fetch by date range covering today
       var today = new Date().toISOString().slice(0, 10);
+      var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
       var res = await api.get('/competitions/' + COMP + '/matches', {
-        params: { season: SEASON, dateFrom: today, dateTo: today },
+        params: { season: SEASON, dateFrom: yesterday, dateTo: today },
       });
       var matches = (res.data && res.data.matches) ? res.data.matches : [];
-      // Filter to only live/paused
+      // Filter to live/paused/finished
       var live = matches.filter(function(m) {
-        return m.status === 'IN_PLAY' || m.status === 'PAUSED';
+        return m.status === 'IN_PLAY' || m.status === 'PAUSED' || m.status === 'FINISHED';
       });
       console.log('[FIFA] Live/paused matches: ' + live.length);
       return live.map(function(m) {

@@ -159,8 +159,8 @@ onMounted(async () => {
 .medal { font-size: 1.1rem; }
 .podium-pts { font-size: .75rem; font-weight: 700; color: var(--text-muted); }
 
-.table-card { padding: 0; overflow: hidden; }
-.lb-table { width: 100%; border-collapse: collapse; }
+.table-card { padding: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.lb-table { width: 100%; border-collapse: collapse; min-width: 500px; }
 .lb-table th {
   background: var(--surface2);
   padding: .7rem 1rem;
