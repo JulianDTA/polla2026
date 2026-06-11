@@ -52,17 +52,9 @@ router.post('/', async (req, res) => {
 
     const now = new Date();
     const matchDate = new Date(match.match_date);
-    const globalDeadline = new Date('2026-06-11T19:29:59Z');
-    const isPastGlobalDeadline = now >= globalDeadline;
 
-    if (isPastGlobalDeadline) {
-      if (matchDate <= now || match.status !== 'upcoming') {
-        return res.status(400).json({ error: 'Predictions are locked — match has already started' });
-      }
-    } else {
-      if (match.status === 'finished') {
-        return res.status(400).json({ error: 'Match is already finished' });
-      }
+    if (matchDate <= now || match.status !== 'upcoming') {
+      return res.status(400).json({ error: 'Predictions are locked — match has already started' });
     }
 
     // Upsert prediction

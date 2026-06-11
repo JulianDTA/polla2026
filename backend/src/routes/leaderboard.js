@@ -9,6 +9,7 @@ const supabase = require('../config/supabase');
  */
 router.get('/', async (req, res) => {
   try {
+    res.set('Cache-Control', 'no-store');
     const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
 
     const { data, error } = await supabase
