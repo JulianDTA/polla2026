@@ -46,11 +46,20 @@ const optionalAuth = async (req, res, next) => {
 };
 
 /**
- * Protect admin-only routes with a shared secret key.
+ * Protect admin-only routes.
+ * Accepts either:
+ *  - x-admin-key header  (manual calls / local dev cron)
+ *  - Authorization: Bearer <CRON_SECRET>  (Vercel cron jobs)
  */
 const adminAuth = (req, res, next) => {
-  const key = req.headers['x-admin-key'];
-  if (!key || key !== process.env.ADMIN_SECRET_KEY) {
+  const key        = req.headers['x-admin-key'];
+  const authHdr    = req.headers['authorization'] || '';
+  const cronSecret = process.env.CRON_SECRET;
+
+  const validAdmin = key && key === process.env.ADMIN_SECRET_KEY;
+  const validCron  = cronSecret && authHdr === `Bearer ${cronSecret}`;
+
+  if (!validAdmin && !validCron) {
     return res.status(403).json({ error: 'Admin access required' });
   }
   next();
