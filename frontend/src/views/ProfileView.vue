@@ -1,0 +1,219 @@
+<template>
+  <div class="profile-view">
+    <div class="page-header">
+      <h1>👤 Mi Perfil</h1>
+    </div>
+
+    <div class="profile-grid">
+      <!-- Profile card -->
+      <div class="card profile-card">
+        <div class="avatar-lg">{{ initial }}</div>
+        <div v-if="!editing">
+          <h2 class="username">{{ auth.profile?.username }}</h2>
+          <p class="email">{{ auth.user?.email }}</p>
+          <p class="full-name">{{ auth.profile?.full_name || 'Sin nombre' }}</p>
+          <button class="btn btn-ghost btn-sm mt" @click="editing = true">✏️ Editar perfil</button>
+        </div>
+        <div v-else class="edit-form">
+          <div class="form-group">
+            <label>Nombre completo</label>
+            <input v-model="editName" type="text" placeholder="Tu nombre" />
+          </div>
+          <div class="form-group">
+            <label>Username</label>
+            <input v-model="editUsername" type="text" minlength="3" maxlength="20" />
+          </div>
+          <p v-if="editError" class="error-msg">{{ editError }}</p>
+          <div class="edit-actions">
+            <button class="btn btn-ghost btn-sm" @click="cancelEdit">Cancelar</button>
+            <button class="btn btn-primary btn-sm" :disabled="editSaving" @click="saveEdit">
+              {{ editSaving ? 'Guardando…' : 'Guardar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats card -->
+      <div class="card stats-card">
+        <h3 class="stats-title">📊 Mis estadísticas</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-val gold">{{ auth.profile?.total_points || 0 }}</span>
+            <span class="stat-label">Puntos totales</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val">{{ stats.total }}</span>
+            <span class="stat-label">Predicciones</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val green">{{ stats.exact }}</span>
+            <span class="stat-label">Marcadores exactos</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val blue">{{ stats.correct }}</span>
+            <span class="stat-label">Resultados correctos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent predictions -->
+    <div class="card predictions-section">
+      <h3 class="section-title">Mis últimas predicciones</h3>
+      <div v-if="predsLoading" class="spinner" />
+      <div v-else-if="predictions.length === 0" class="empty">
+        Aún no has hecho predicciones. <RouterLink to="/matches">¡Empieza ahora!</RouterLink>
+      </div>
+      <div v-else class="preds-list">
+        <div v-for="p in predictions" :key="p.id" class="pred-row">
+          <div class="pred-match">
+            <img v-if="p.matches?.home_team_flag" :src="p.matches.home_team_flag" class="flag-xs" />
+            <span class="pred-team">{{ p.matches?.home_team_name }}</span>
+            <span class="pred-vs">vs</span>
+            <span class="pred-team">{{ p.matches?.away_team_name }}</span>
+            <img v-if="p.matches?.away_team_flag" :src="p.matches.away_team_flag" class="flag-xs" />
+          </div>
+          <div class="pred-scores">
+            <span class="pred-my">{{ p.predicted_home_score }} – {{ p.predicted_away_score }}</span>
+            <span v-if="p.matches?.status === 'finished'" class="pred-real">
+              (Real: {{ p.matches.home_score }} – {{ p.matches.away_score }})
+            </span>
+          </div>
+          <span v-if="p.points_earned !== null" class="badge" :class="ptsBadge(p.points_earned)">
+            +{{ p.points_earned }} pts
+          </span>
+          <span v-else class="badge badge-gray">Pendiente</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logout -->
+    <div style="text-align:center; margin-top: 1rem;">
+      <button class="btn btn-ghost" @click="handleLogout">Cerrar sesión</button>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import { getPredictions } from '../services/api'
+
+const auth        = useAuthStore()
+const router      = useRouter()
+const editing     = ref(false)
+const editName    = ref(auth.profile?.full_name || '')
+const editUsername = ref(auth.profile?.username || '')
+const editError   = ref(null)
+const editSaving  = ref(false)
+const predictions = ref([])
+const predsLoading = ref(false)
+
+const initial = computed(() => (auth.profile?.username || auth.user?.email || '?')[0].toUpperCase())
+
+const stats = computed(() => ({
+  total:   predictions.value.length,
+  exact:   predictions.value.filter(p => p.points_earned === 3).length,
+  correct: predictions.value.filter(p => p.points_earned === 1).length,
+}))
+
+const ptsBadge = (pts) => {
+  if (pts === 3) return 'badge-gold'
+  if (pts === 1) return 'badge-green'
+  return 'badge-gray'
+}
+
+function cancelEdit() {
+  editName.value     = auth.profile?.full_name || ''
+  editUsername.value = auth.profile?.username || ''
+  editError.value    = null
+  editing.value      = false
+}
+
+async function saveEdit() {
+  editSaving.value = true
+  editError.value  = null
+  try {
+    await auth.updateProfile({ full_name: editName.value, username: editUsername.value })
+    editing.value = false
+  } catch (e) {
+    editError.value = e.message || 'Error al guardar'
+  } finally {
+    editSaving.value = false
+  }
+}
+
+async function handleLogout() {
+  await auth.logout()
+  router.push('/')
+}
+
+onMounted(async () => {
+  predsLoading.value = true
+  try {
+    const { data } = await getPredictions()
+    predictions.value = data.reverse()
+  } catch (e) {
+    console.error('Failed to load predictions:', e)
+  } finally {
+    predsLoading.value = false
+  }
+})
+</script>
+
+<style scoped>
+.profile-view { display: flex; flex-direction: column; gap: 1.5rem; }
+.page-header h1 { font-size: 1.6rem; font-weight: 900; }
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.profile-card { display: flex; flex-direction: column; align-items: center; gap: .8rem; text-align: center; }
+.avatar-lg {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; font-weight: 900;
+}
+.username { font-size: 1.2rem; font-weight: 800; }
+.email { font-size: .8rem; color: var(--text-muted); }
+.full-name { font-size: .9rem; color: var(--text-muted); }
+.mt { margin-top: .4rem; }
+
+.edit-form { width: 100%; text-align: left; }
+.edit-actions { display: flex; gap: .5rem; justify-content: flex-end; margin-top: .3rem; }
+
+.stats-title { font-size: 1rem; font-weight: 800; margin-bottom: 1rem; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.stat-item { display: flex; flex-direction: column; align-items: center; gap: .2rem; }
+.stat-val { font-size: 1.6rem; font-weight: 900; }
+.stat-val.gold  { color: var(--gold); }
+.stat-val.green { color: var(--green); }
+.stat-val.blue  { color: var(--primary); }
+.stat-label { font-size: .75rem; color: var(--text-muted); text-align: center; }
+
+.section-title { font-size: 1rem; font-weight: 800; margin-bottom: 1rem; }
+.preds-list { display: flex; flex-direction: column; gap: .5rem; }
+.pred-row {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  flex-wrap: wrap;
+  padding: .55rem .7rem;
+  background: var(--surface2);
+  border-radius: var(--radius);
+}
+.pred-match { display: flex; align-items: center; gap: .4rem; flex: 1; min-width: 180px; }
+.pred-team { font-size: .85rem; font-weight: 600; }
+.pred-vs { font-size: .75rem; color: var(--text-muted); }
+.flag-xs { width: 22px; height: 16px; object-fit: cover; border-radius: 2px; border: 1px solid var(--border); }
+.pred-scores { display: flex; align-items: center; gap: .4rem; font-size: .85rem; }
+.pred-my { font-weight: 700; }
+.pred-real { color: var(--text-muted); font-size: .8rem; }
+.empty { color: var(--text-muted); padding: 2rem; text-align: center; }
+</style>

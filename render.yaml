@@ -1,0 +1,49 @@
+services:
+  # ── Backend (Node.js Web Service) ──────────────────────────
+  - type: web
+    name: polla-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        sync: false      # Set in Render dashboard to your frontend URL
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: FIFA_API_KEY
+        sync: false
+      - key: FIFA_API_BASE_URL
+        value: https://v3.football.api-sports.io
+      - key: ADMIN_SECRET_KEY
+        generateValue: true   # Render generates a random value automatically
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+  # ── Frontend (Static Site) ─────────────────────────────────
+  - type: web
+    name: polla-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html   # SPA fallback
+    envVars:
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      - key: VITE_API_URL
+        sync: false      # MUST include /api suffix: https://polla-backend.onrender.com/api
+    autoDeploy: true
