@@ -31,7 +31,12 @@ export const useMatchesStore = defineStore('matches', () => {
     error.value   = null
     try {
       const { data } = await getMatches(params)
-      matches.value = data
+      if (Array.isArray(data)) {
+        matches.value = data
+      } else {
+        matches.value = []
+        error.value = 'Respuesta inválida del servidor (posible error de VITE_API_URL)'
+      }
     } catch (e) {
       error.value = e.response?.data?.error || e.message
     } finally {
@@ -42,7 +47,9 @@ export const useMatchesStore = defineStore('matches', () => {
   async function loadStandings() {
     try {
       const { data } = await getStandings()
-      standings.value = data
+      if (Array.isArray(data)) {
+        standings.value = data
+      }
     } catch (e) {
       console.error('loadStandings error:', e)
     }
