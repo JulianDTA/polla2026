@@ -9,11 +9,11 @@
   "crons": [
     {
       "path": "/api/admin/cron/sync-live",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 2 * * *"
     },
     {
       "path": "/api/admin/cron/calculate-points",
-      "schedule": "0 * * * *"
+      "schedule": "30 2 * * *"
     }
   ]
 }
