@@ -56,10 +56,10 @@
         <p v-if="error" class="error-msg">{{ error }}</p>
 
         <div class="modal-actions">
-          <button class="btn btn-ghost" @click="$emit('close')">Cancelar</button>
-          <button class="btn btn-gold" :disabled="saving || !isValid" @click="submit">
+          <button class="btn btn-gold btn-block" :disabled="saving || !isValid" @click="submit">
             {{ saving ? 'Guardando…' : (existing ? 'Actualizar predicción' : 'Guardar predicción') }}
           </button>
+          <button class="btn btn-ghost btn-block" @click="$emit('close')">Cancelar</button>
         </div>
       </div>
     </div>
@@ -199,8 +199,11 @@ onUnmounted(() => { document.body.style.overflow = '' })
 }
 .modal-actions {
   display: flex;
+  flex-direction: column;
   gap: .7rem;
-  justify-content: flex-end;
-  margin-top: .5rem;
+  margin-top: 1rem;
+}
+.modal-actions .btn {
+  width: 100%;
 }
 </style>

@@ -33,10 +33,10 @@
         </div>
         <p v-if="error" class="error-msg">{{ error }}</p>
         <div class="actions">
-          <button v-if="editing" class="btn btn-ghost btn-sm" @click="editing = false">Cancelar</button>
           <button class="btn btn-gold" :disabled="!selected || saving" @click="save">
             {{ saving ? 'Guardando…' : '✅ Confirmar campeón' }}
           </button>
+          <button v-if="editing" class="btn btn-ghost btn-sm" @click="editing = false">Cancelar</button>
         </div>
       </template>
     </div>
@@ -55,7 +55,7 @@ const saving   = ref(false)
 const editing  = ref(false)
 const error    = ref(null)
 
-const TOURNAMENT_START = new Date('2026-06-11T19:30:00Z')
+const TOURNAMENT_START = new Date('2026-06-11T19:29:59Z')
 const locked = computed(() => new Date() >= TOURNAMENT_START)
 
 const filteredTeams = computed(() => {
@@ -139,5 +139,12 @@ onMounted(load)
 }
 .team-btn:hover { background: var(--surface); border-color: var(--primary); }
 .team-btn.selected { border-color: var(--gold); background: #3d2f0e; color: var(--gold); }
-.actions { display: flex; gap: .7rem; justify-content: flex-end; }
+.actions { 
+  display: flex; 
+  flex-direction: column; 
+  gap: .7rem; 
+}
+.actions .btn {
+  width: 100%;
+}
 </style>
