@@ -14,7 +14,19 @@ const PORT = process.env.PORT || 3001;
 
 // ── Middleware ────────────────────────────────────────────────
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (
+      origin.includes('localhost') || 
+      origin.includes('127.0.0.1') || 
+      origin.endsWith('.vercel.app') || 
+      origin === process.env.FRONTEND_URL
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 
