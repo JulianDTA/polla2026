@@ -71,6 +71,14 @@ router.post('/sync-live', async (req, res) => {
       }
     }
 
+    // Auto-calculate points for finished matches
+    const { data: finMatches } = await supabase.from('matches').select('id').eq('status', 'finished');
+    if (finMatches && finMatches.length) {
+      for (const match of finMatches) {
+        await supabase.rpc('calculate_match_points', { p_match_id: match.id });
+      }
+    }
+
     res.json({ updated, total: liveMatches.length });
   } catch (err) {
     console.error('[Admin] Sync-live error:', err.message);
@@ -156,6 +164,14 @@ router.get('/cron/sync-live', async (req, res) => {
         .eq('external_id', m.external_id);
       if (!error) updated++;
     }
+    // Auto-calculate points for finished matches
+    const { data: finMatches } = await supabase.from('matches').select('id').eq('status', 'finished');
+    if (finMatches && finMatches.length) {
+      for (const match of finMatches) {
+        await supabase.rpc('calculate_match_points', { p_match_id: match.id });
+      }
+    }
+
     console.log('[Cron] sync-live: ' + updated + ' updated');
     res.json({ updated, total: liveMatches.length });
   } catch (err) {
