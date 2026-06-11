@@ -10,6 +10,7 @@ const leaderboardRouter = require('./src/routes/leaderboard');
 const adminRouter       = require('./src/routes/admin');
 
 const app  = express();
+app.set('trust proxy', 1); // Confiar en el proxy de Vercel para express-rate-limit
 const PORT = process.env.PORT || 3001;
 
 // ── Middleware ────────────────────────────────────────────────
