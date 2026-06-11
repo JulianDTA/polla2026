@@ -68,7 +68,12 @@ const isLoggedIn = computed(() => auth.isLoggedIn)
 
 const canPredict = computed(() => {
   if (!auth.isLoggedIn) return false
-  return props.match.status === 'upcoming' && new Date(props.match.match_date) > new Date()
+  const globalDeadline = new Date('2026-06-11T19:30:00Z')
+  const matchDate = new Date(props.match.match_date)
+  const isPastGlobalDeadline = new Date() >= globalDeadline
+  
+  if (!isPastGlobalDeadline) return props.match.status !== 'finished'
+  return props.match.status === 'upcoming' && matchDate > new Date()
 })
 
 const homeWins = computed(() =>

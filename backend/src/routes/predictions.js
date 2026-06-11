@@ -52,8 +52,17 @@ router.post('/', async (req, res) => {
 
     const now = new Date();
     const matchDate = new Date(match.match_date);
-    if (matchDate <= now || match.status !== 'upcoming') {
-      return res.status(400).json({ error: 'Predictions are locked — match has already started' });
+    const globalDeadline = new Date('2026-06-11T19:30:00Z');
+    const isPastGlobalDeadline = now >= globalDeadline;
+
+    if (isPastGlobalDeadline) {
+      if (matchDate <= now || match.status !== 'upcoming') {
+        return res.status(400).json({ error: 'Predictions are locked — match has already started' });
+      }
+    } else {
+      if (match.status === 'finished') {
+        return res.status(400).json({ error: 'Match is already finished' });
+      }
     }
 
     // Upsert prediction
@@ -110,7 +119,7 @@ router.post('/champion', async (req, res) => {
   }
 
   // Lock champion picks after the first match starts
-  const TOURNAMENT_START = new Date('2026-06-11T15:00:00Z');
+  const TOURNAMENT_START = new Date('2026-06-11T19:30:00Z');
   if (new Date() >= TOURNAMENT_START) {
     return res.status(400).json({ error: 'Champion predictions are locked — tournament has started' });
   }
