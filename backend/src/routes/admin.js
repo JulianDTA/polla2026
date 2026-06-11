@@ -54,14 +54,13 @@ router.post('/sync-live', async (req, res) => {
 
     let updated = 0;
     for (const m of liveMatches) {
+      const updateData = { status: m.status, updated_at: m.updated_at };
+      if (m.home_score !== null) updateData.home_score = m.home_score;
+      if (m.away_score !== null) updateData.away_score = m.away_score;
+
       const { error } = await supabase
         .from('matches')
-        .update({
-          status:     m.status,
-          home_score: m.home_score,
-          away_score: m.away_score,
-          updated_at: m.updated_at,
-        })
+        .update(updateData)
         .eq('external_id', m.external_id);
 
       if (error) {
@@ -158,9 +157,13 @@ router.get('/cron/sync-live', async (req, res) => {
     }
     let updated = 0;
     for (const m of liveMatches) {
+      const updateData = { status: m.status, updated_at: m.updated_at };
+      if (m.home_score !== null) updateData.home_score = m.home_score;
+      if (m.away_score !== null) updateData.away_score = m.away_score;
+      
       const { error } = await supabase
         .from('matches')
-        .update({ status: m.status, home_score: m.home_score, away_score: m.away_score, updated_at: m.updated_at })
+        .update(updateData)
         .eq('external_id', m.external_id);
       if (!error) updated++;
     }
