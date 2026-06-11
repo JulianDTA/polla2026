@@ -29,10 +29,14 @@ app.use(rateLimit({
 }));
 
 // ── Routes ───────────────────────────────────────────────────
-app.use('/api/matches',     matchesRouter);
-app.use('/api/predictions', predictionsRouter);
-app.use('/api/leaderboard', leaderboardRouter);
-app.use('/api/admin',       adminRouter);
+const apiRouter = express.Router();
+apiRouter.use('/matches',     matchesRouter);
+apiRouter.use('/predictions', predictionsRouter);
+apiRouter.use('/leaderboard', leaderboardRouter);
+apiRouter.use('/admin',       adminRouter);
+
+app.use('/api', apiRouter);
+app.use('/',    apiRouter); // Fallback por si en el frontend olvidan poner /api
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', env: process.env.NODE_ENV, ts: new Date().toISOString() });
