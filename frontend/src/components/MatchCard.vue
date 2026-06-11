@@ -39,10 +39,10 @@
       <span v-if="prediction.points_earned !== null" class="badge" :class="pointsBadge(prediction.points_earned)">
         +{{ prediction.points_earned }} pts
       </span>
-      <button v-if="canPredict" class="btn btn-ghost btn-sm" @click="$emit('predict', match)">✏️ Editar</button>
+      <button v-if="canPredict" class="btn btn-ghost btn-sm btn-edit" @click="$emit('predict', match)">✏️ Editar</button>
     </div>
     <div v-else-if="canPredict" class="prediction-row">
-      <button class="btn btn-gold btn-sm" @click="$emit('predict', match)">⚽ Predecir</button>
+      <button class="btn btn-gold btn-sm btn-predict" @click="$emit('predict', match)">⚽ Predecir</button>
     </div>
     <div v-else-if="!canPredict && !prediction && isLoggedIn" class="prediction-row locked">
       🔒 Predicciones cerradas
@@ -183,5 +183,7 @@ const pointsBadge = (pts) => {
 }
 .pred-label { color: var(--text-muted); }
 .pred-score { font-weight: 700; }
+.btn-edit { margin-left: auto; }
+.btn-predict { width: 100%; }
 .locked { color: var(--text-muted); font-size: .8rem; }
 </style>
