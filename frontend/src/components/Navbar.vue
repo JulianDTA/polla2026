@@ -4,7 +4,8 @@
       <RouterLink to="/" class="nav-brand">⚽ <span>Polla 2026</span></RouterLink>
 
       <div class="nav-links">
-        <RouterLink to="/matches">Partidos</RouterLink>
+        <RouterLink to="/matches">Predicciones</RouterLink>
+        <RouterLink to="/schedule">Resultados</RouterLink>
         <RouterLink to="/leaderboard">Tabla</RouterLink>
         <template v-if="auth.isLoggedIn">
           <RouterLink to="/profile" class="nav-user">
@@ -27,9 +28,9 @@
       </button>
     </div>
 
-    <!-- Mobile menu -->
     <div v-if="open" class="mobile-menu" @click="open = false">
-      <RouterLink to="/matches">Partidos</RouterLink>
+      <RouterLink to="/matches">Predicciones</RouterLink>
+      <RouterLink to="/schedule">Resultados en vivo</RouterLink>
       <RouterLink to="/leaderboard">Tabla de posiciones</RouterLink>
       <template v-if="auth.isLoggedIn">
         <RouterLink to="/profile">Mi perfil</RouterLink>

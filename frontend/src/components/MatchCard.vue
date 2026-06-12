@@ -33,23 +33,25 @@
     <p v-if="match.city" class="venue">📍 {{ match.city }}</p>
 
     <!-- User prediction -->
-    <div v-if="prediction" class="prediction-row">
-      <span class="pred-label">Tu predicción:</span>
-      <span class="pred-score">{{ prediction.predicted_home_score }} – {{ prediction.predicted_away_score }}</span>
-      <span v-if="prediction.points_earned !== null" class="badge" :class="pointsBadge(prediction.points_earned)">
-        +{{ prediction.points_earned }} pts
-      </span>
-      <button v-if="canPredict" class="btn btn-ghost btn-sm btn-edit" @click="$emit('predict', match)">✏️ Editar</button>
-    </div>
-    <div v-else-if="canPredict" class="prediction-row">
-      <button class="btn btn-gold btn-sm btn-predict" @click="$emit('predict', match)">⚽ Predecir</button>
-    </div>
-    <div v-else-if="!canPredict && !prediction && isLoggedIn" class="prediction-row locked">
-      🔒 Predicciones cerradas
-    </div>
-    <div v-else-if="!isLoggedIn" class="prediction-row locked">
-      <RouterLink to="/login">Inicia sesión para predecir</RouterLink>
-    </div>
+    <template v-if="!readonly">
+      <div v-if="prediction" class="prediction-row">
+        <span class="pred-label">Tu predicción:</span>
+        <span class="pred-score">{{ prediction.predicted_home_score }} – {{ prediction.predicted_away_score }}</span>
+        <span v-if="prediction.points_earned !== null" class="badge" :class="pointsBadge(prediction.points_earned)">
+          +{{ prediction.points_earned }} pts
+        </span>
+        <button v-if="canPredict" class="btn btn-ghost btn-sm btn-edit" @click="$emit('predict', match)">✏️ Editar</button>
+      </div>
+      <div v-else-if="canPredict" class="prediction-row">
+        <button class="btn btn-gold btn-sm btn-predict" @click="$emit('predict', match)">⚽ Predecir</button>
+      </div>
+      <div v-else-if="!canPredict && !prediction && isLoggedIn" class="prediction-row locked">
+        🔒 Predicciones cerradas
+      </div>
+      <div v-else-if="!isLoggedIn" class="prediction-row locked">
+        <RouterLink to="/login">Inicia sesión para predecir</RouterLink>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -60,6 +62,7 @@ import { useAuthStore } from '../stores/auth'
 const props = defineProps({
   match:      { type: Object, required: true },
   prediction: { type: Object, default: null },
+  readonly:   { type: Boolean, default: false },
 })
 defineEmits(['predict'])
 
