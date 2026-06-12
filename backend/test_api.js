@@ -8,9 +8,9 @@ async function test() {
       params: { season: 2026 }
     });
     const matches = res.data.matches;
-    const mexico = matches.find(m => m.homeTeam?.name === 'Mexico' || m.awayTeam?.name === 'Mexico');
-    console.log("Mexico match from API:");
-    console.log(mexico.status, mexico.score);
+    const match = matches.find(m => m.homeTeam?.name === 'South Korea' || m.awayTeam?.name === 'South Korea');
+    console.log("South Korea match from API:");
+    console.log(match.status, match.score);
   } catch (err) {
     console.error(err.message);
   }
