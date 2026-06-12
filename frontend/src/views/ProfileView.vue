@@ -35,7 +35,7 @@
 
       <!-- Stats card -->
       <div class="card stats-card">
-        <h3 class="stats-title">📊 Mis estadísticas</h3>
+        <h3 class="stats-title">Mis estadísticas</h3>
         <div class="stats-grid">
           <div class="stat-item">
             <span class="stat-val gold">{{ auth.profile?.total_points || 0 }}</span>
@@ -128,9 +128,13 @@ const stats = computed(() => ({
 
 const visiblePredictions = computed(() => {
   if (predsTab.value === 'upcoming') {
-    return predictions.value.filter(p => p.matches?.status === 'upcoming')
+    return predictions.value
+      .filter(p => p.matches?.status === 'upcoming')
+      .sort((a, b) => new Date(a.matches.match_date) - new Date(b.matches.match_date))
   } else {
-    return predictions.value.filter(p => p.matches?.status === 'live' || p.matches?.status === 'finished')
+    return predictions.value
+      .filter(p => p.matches?.status === 'live' || p.matches?.status === 'finished')
+      .sort((a, b) => new Date(b.matches.match_date) - new Date(a.matches.match_date))
   }
 })
 

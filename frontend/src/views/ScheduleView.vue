@@ -1,7 +1,7 @@
 <template>
   <div class="schedule-view">
     <div class="page-header">
-      <h1>🗓️ Calendario y Resultados</h1>
+      <h1>Calendario y Resultados</h1>
       <p class="page-sub">Consulta los horarios por sede y sigue los resultados en vivo</p>
     </div>
 
@@ -52,18 +52,14 @@
         
         <div v-for="day in upcomingMatchDays" :key="day.date" class="day-group">
           <h2 class="day-title">{{ formatDateLong(day.date) }}</h2>
-          
-          <div v-for="venue in day.venues" :key="venue.name" class="venue-group">
-            <h3 class="venue-title">🏟️ {{ venue.name || 'Sede por definir' }}</h3>
-            <div class="matches-grid">
-              <MatchCard
-                v-for="match in venue.matches"
-                :key="match.id"
-                :match="match"
-                :prediction="match.userPrediction"
-                :readonly="true"
-              />
-            </div>
+          <div class="matches-grid">
+            <MatchCard
+              v-for="match in day.matches"
+              :key="match.id"
+              :match="match"
+              :prediction="match.userPrediction"
+              :readonly="true"
+            />
           </div>
         </div>
       </div>
@@ -101,7 +97,7 @@ const upcomingMatches = computed(() => {
     .sort((a, b) => new Date(a.match_date) - new Date(b.match_date))
 })
 
-// Agrupar Próximos por Día y Sede
+// Agrupar Próximos por Día
 const upcomingMatchDays = computed(() => {
   const daysMap = {}
 
@@ -111,29 +107,14 @@ const upcomingMatchDays = computed(() => {
     const dayStr = dateObj.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' })
     
     if (!daysMap[dayStr]) {
-      daysMap[dayStr] = { date: dateObj, venuesMap: {} }
+      daysMap[dayStr] = { date: dateObj, matches: [] }
     }
-
-    const venue = match.venue || 'Sede por definir'
-    if (!daysMap[dayStr].venuesMap[venue]) {
-      daysMap[dayStr].venuesMap[venue] = []
-    }
-
-    daysMap[dayStr].venuesMap[venue].push(match)
+    daysMap[dayStr].matches.push(match)
   })
 
   // Convertir el Map a Arrays para v-for
   return Object.values(daysMap)
     .sort((a, b) => a.date - b.date)
-    .map(dayObj => ({
-      date: dayObj.date,
-      venues: Object.entries(dayObj.venuesMap)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([venueName, matches]) => ({
-          name: venueName,
-          matches
-        }))
-    }))
 })
 
 // Helpers
