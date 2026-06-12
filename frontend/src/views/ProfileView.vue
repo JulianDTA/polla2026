@@ -57,15 +57,22 @@
       </div>
     </div>
 
-    <!-- Recent predictions -->
+    <!-- My Predictions -->
     <div class="card predictions-section">
-      <h3 class="section-title">Mis últimas predicciones</h3>
+      <div class="preds-header">
+        <h3 class="section-title">Mis Predicciones</h3>
+        <div class="preds-tabs">
+          <button class="tab-btn" :class="{ active: predsTab === 'upcoming' }" @click="predsTab = 'upcoming'">Próximas</button>
+          <button class="tab-btn" :class="{ active: predsTab === 'past' }" @click="predsTab = 'past'">Jugadas</button>
+        </div>
+      </div>
+      
       <div v-if="predsLoading" class="spinner" />
-      <div v-else-if="predictions.length === 0" class="empty">
-        Aún no has hecho predicciones. <RouterLink to="/matches">¡Empieza ahora!</RouterLink>
+      <div v-else-if="visiblePredictions.length === 0" class="empty">
+        No tienes predicciones en esta sección. <RouterLink v-if="predsTab === 'upcoming'" to="/matches">¡Empieza ahora!</RouterLink>
       </div>
       <div v-else class="preds-list">
-        <div v-for="p in predictions" :key="p.id" class="pred-row">
+        <div v-for="p in visiblePredictions" :key="p.id" class="pred-row">
           <div class="pred-match">
             <img v-if="p.matches?.home_team_flag" :src="p.matches.home_team_flag" class="flag-xs" />
             <span class="pred-team">{{ p.matches?.home_team_name }}</span>
@@ -109,6 +116,7 @@ const editError   = ref(null)
 const editSaving  = ref(false)
 const predictions = ref([])
 const predsLoading = ref(false)
+const predsTab    = ref('upcoming') // 'upcoming' or 'past'
 
 const initial = computed(() => (auth.profile?.username || auth.user?.email || '?')[0].toUpperCase())
 
@@ -117,6 +125,14 @@ const stats = computed(() => ({
   exact:   predictions.value.filter(p => p.points_earned === 3).length,
   correct: predictions.value.filter(p => p.points_earned === 1).length,
 }))
+
+const visiblePredictions = computed(() => {
+  if (predsTab.value === 'upcoming') {
+    return predictions.value.filter(p => p.matches?.status === 'upcoming')
+  } else {
+    return predictions.value.filter(p => p.matches?.status === 'live' || p.matches?.status === 'finished')
+  }
+})
 
 const ptsBadge = (pts) => {
   if (pts === 3) return 'badge-gold'
@@ -197,7 +213,37 @@ onMounted(async () => {
 .stat-val.blue  { color: var(--primary); }
 .stat-label { font-size: .75rem; color: var(--text-muted); text-align: center; }
 
-.section-title { font-size: 1rem; font-weight: 800; margin-bottom: 1rem; }
+.section-title { font-size: 1rem; font-weight: 800; margin-bottom: 0; }
+.preds-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.preds-tabs {
+  display: flex;
+  background: var(--surface2);
+  border-radius: 99px;
+  padding: .2rem;
+}
+.tab-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: .85rem;
+  font-weight: 600;
+  padding: .3rem .8rem;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.tab-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
 .preds-list { display: flex; flex-direction: column; gap: .5rem; }
 .pred-row {
   display: flex;
