@@ -48,6 +48,7 @@ apiRouter.use('/matches',     matchesRouter);
 apiRouter.use('/predictions', predictionsRouter);
 apiRouter.use('/leaderboard', leaderboardRouter);
 apiRouter.use('/admin',       adminRouter);
+apiRouter.use('/groups',      groupsRouter);
 
 app.use('/api', apiRouter);
 app.use('/',    apiRouter); // Fallback por si en el frontend olvidan poner /api
