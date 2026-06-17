@@ -23,6 +23,7 @@ export const getTeams      = ()            => api.get('/matches/teams')
 // ── Predictions ──────────────────────────────────────────────
 export const getPredictions  = ()      => api.get('/predictions')
 export const savePrediction  = (body)  => api.post('/predictions', body)
+export const getMatchGroupPredictions = (matchId, groupId) => api.get(`/predictions/match/${matchId}?group_id=${groupId}`)
 
 export const getChampionPick  = ()     => api.get('/predictions/champion')
 export const saveChampionPick = (body) => api.post('/predictions/champion', body)

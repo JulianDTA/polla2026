@@ -139,4 +139,84 @@ router.post('/champion', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/predictions/match/:matchId
+ * Get all predictions for a match by members of a specific group
+ * Query: ?group_id=...
+ */
+router.get('/match/:matchId', async (req, res) => {
+  const matchId = req.params.matchId;
+  const groupId = req.query.group_id;
+
+  if (!groupId) {
+    return res.status(400).json({ error: 'group_id is required' });
+  }
+
+  try {
+    // 1. Verify match status
+    const { data: match, error: matchErr } = await supabase
+      .from('matches')
+      .select('status')
+      .eq('id', matchId)
+      .single();
+
+    if (matchErr || !match) {
+      return res.status(404).json({ error: 'Match not found' });
+    }
+
+    // ANTI-CHEAT RULE
+    if (match.status === 'upcoming') {
+      return res.status(403).json({ error: 'No puedes ver las predicciones de los demás hasta que inicie el partido.' });
+    }
+
+    // 2. Verify user is in the group
+    const { data: membership, error: memErr } = await supabase
+      .from('group_members')
+      .select('id')
+      .eq('group_id', groupId)
+      .eq('user_id', req.user.id)
+      .single();
+
+    if (memErr || !membership) {
+      return res.status(403).json({ error: 'No perteneces a este grupo.' });
+    }
+
+    // 3. Fetch predictions of users in the group
+    const { data, error } = await supabase
+      .from('predictions')
+      .select(`
+        predicted_home_score,
+        predicted_away_score,
+        points_earned,
+        profiles!inner(id, username, avatar_url, group_members!inner(group_id))
+      `)
+      .eq('match_id', matchId)
+      .eq('profiles.group_members.group_id', groupId);
+
+    if (error) throw error;
+
+    // Map response to a clean format
+    const formatted = data.map(p => ({
+      username: p.profiles.username,
+      avatar_url: p.profiles.avatar_url,
+      predicted_home_score: p.predicted_home_score,
+      predicted_away_score: p.predicted_away_score,
+      points_earned: p.points_earned
+    }));
+
+    // Sort by points earned descending, then username
+    formatted.sort((a, b) => {
+      const ptsA = a.points_earned || 0;
+      const ptsB = b.points_earned || 0;
+      if (ptsB !== ptsA) return ptsB - ptsA;
+      return a.username.localeCompare(b.username);
+    });
+
+    res.json(formatted);
+  } catch (err) {
+    console.error('GET /predictions/match error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch match predictions' });
+  }
+});
+
 module.exports = router;

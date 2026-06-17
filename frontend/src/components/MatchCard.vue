@@ -52,6 +52,12 @@
         <RouterLink to="/login">Inicia sesión para predecir</RouterLink>
       </div>
     </template>
+    
+    <template v-else>
+      <div v-if="match.status !== 'upcoming'" class="prediction-row">
+        <button class="btn btn-ghost btn-sm btn-predict" @click="$emit('viewPredictions', match)">👥 Ver grupo</button>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -64,7 +70,7 @@ const props = defineProps({
   prediction: { type: Object, default: null },
   readonly:   { type: Boolean, default: false },
 })
-defineEmits(['predict'])
+defineEmits(['predict', 'viewPredictions'])
 
 const auth      = useAuthStore()
 const isLoggedIn = computed(() => auth.isLoggedIn)
