@@ -120,4 +120,41 @@ router.post('/join', async (req, res) => {
   }
 });
 
+// Leave a group
+router.post('/leave', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+
+  const { group_id } = req.body;
+  if (!group_id) return res.status(400).json({ error: 'group_id is required' });
+
+  try {
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+    if (authErr || !user) return res.status(401).json({ error: 'Unauthorized' });
+
+    // Check if the user is the owner
+    const { data: group } = await supabase
+      .from('groups')
+      .select('owner_id')
+      .eq('id', group_id)
+      .single();
+
+    if (group && group.owner_id === user.id) {
+      return res.status(400).json({ error: 'El creador del grupo no puede abandonarlo.' });
+    }
+
+    const { error: dErr } = await supabase
+      .from('group_members')
+      .delete()
+      .eq('group_id', group_id)
+      .eq('user_id', user.id);
+
+    if (dErr) throw dErr;
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

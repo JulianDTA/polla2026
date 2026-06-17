@@ -57,6 +57,51 @@
       </div>
     </div>
 
+    <!-- Groups Section -->
+    <div class="card groups-card">
+      <div class="groups-header">
+        <h3 class="section-title">Mis Grupos</h3>
+      </div>
+      
+      <div v-if="groupsStore.loading" class="spinner" />
+      <div v-else>
+        <!-- No groups warning -->
+        <div v-if="groupsStore.groups.length === 0" class="no-groups-warning">
+          <p>⚠️ No perteneces a ningún grupo. Para participar, crea un grupo nuevo o únete a uno existente.</p>
+        </div>
+
+        <div class="groups-list">
+          <div v-for="g in groupsStore.groups" :key="g.id" class="group-row">
+            <div>
+              <div class="group-name">{{ g.name }}</div>
+              <div class="group-code">Código: <strong>{{ g.invite_code }}</strong></div>
+            </div>
+            <button class="btn btn-ghost btn-sm text-red" @click="leaveGroup(g.id)">Salir</button>
+          </div>
+        </div>
+
+        <div class="group-actions mt">
+          <div class="action-box">
+            <h4>Unirse</h4>
+            <div class="action-flex">
+              <input v-model="inviteCode" type="text" placeholder="Código" />
+              <button class="btn btn-primary btn-sm" :disabled="!inviteCode" @click="joinGroup">Unirme</button>
+            </div>
+            <p v-if="joinError" class="error-msg text-sm">{{ joinError }}</p>
+          </div>
+          
+          <div class="action-box">
+            <h4>Crear Grupo</h4>
+            <div class="action-flex">
+              <input v-model="newGroupName" type="text" placeholder="Nombre" />
+              <button class="btn btn-gold btn-sm" :disabled="!newGroupName" @click="createGroup">Crear</button>
+            </div>
+            <p v-if="createError" class="error-msg text-sm">{{ createError }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- My Predictions -->
     <div class="card predictions-section">
       <div class="preds-header">
@@ -105,18 +150,26 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useGroupsStore } from '../stores/groups'
 import { getPredictions } from '../services/api'
 
 const auth        = useAuthStore()
+const groupsStore = useGroupsStore()
 const router      = useRouter()
 const editing     = ref(false)
 const editName    = ref(auth.profile?.full_name || '')
 const editUsername = ref(auth.profile?.username || '')
 const editError   = ref(null)
 const editSaving  = ref(false)
+
 const predictions = ref([])
 const predsLoading = ref(false)
 const predsTab    = ref('upcoming') // 'upcoming' or 'past'
+
+const inviteCode   = ref('')
+const joinError    = ref(null)
+const newGroupName = ref('')
+const createError  = ref(null)
 
 const initial = computed(() => (auth.profile?.username || auth.user?.email || '?')[0].toUpperCase())
 
@@ -151,6 +204,35 @@ function cancelEdit() {
   editing.value      = false
 }
 
+async function joinGroup() {
+  joinError.value = null
+  try {
+    await groupsStore.joinGroup(inviteCode.value)
+    inviteCode.value = ''
+  } catch (e) {
+    joinError.value = e.message
+  }
+}
+
+async function createGroup() {
+  createError.value = null
+  try {
+    await groupsStore.createGroup(newGroupName.value)
+    newGroupName.value = ''
+  } catch (e) {
+    createError.value = e.message
+  }
+}
+
+async function leaveGroup(groupId) {
+  if (!confirm('¿Estás seguro de que quieres abandonar este grupo?')) return
+  try {
+    await groupsStore.leaveGroup(groupId)
+  } catch (e) {
+    alert(e.message)
+  }
+}
+
 async function saveEdit() {
   editSaving.value = true
   editError.value  = null
@@ -170,6 +252,10 @@ async function handleLogout() {
 }
 
 onMounted(async () => {
+  if (auth.isLoggedIn) {
+    groupsStore.fetchGroups()
+  }
+
   predsLoading.value = true
   try {
     const { data } = await getPredictions()
@@ -216,6 +302,23 @@ onMounted(async () => {
 .stat-val.green { color: var(--green); }
 .stat-val.blue  { color: var(--primary); }
 .stat-label { font-size: .75rem; color: var(--text-muted); text-align: center; }
+
+.groups-card { margin-top: 1rem; }
+.groups-header { margin-bottom: 1rem; }
+.no-groups-warning { background: rgba(255,193,7,.1); border: 1px solid var(--gold); color: var(--gold); padding: 1rem; border-radius: var(--radius); text-align: center; }
+.groups-list { display: flex; flex-direction: column; gap: .8rem; }
+.group-row { display: flex; justify-content: space-between; align-items: center; background: var(--surface2); padding: .8rem 1rem; border-radius: var(--radius); }
+.group-name { font-weight: 800; font-size: 1.1rem; }
+.group-code { font-size: .85rem; color: var(--text-muted); }
+.text-red { color: #f87171 !important; }
+.text-red:hover { background: rgba(248,113,113,.1) !important; }
+
+.group-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+.action-box { background: var(--surface2); padding: 1rem; border-radius: var(--radius); }
+.action-box h4 { font-size: .9rem; margin-bottom: .5rem; }
+.action-flex { display: flex; gap: .5rem; }
+.action-flex input { flex: 1; min-width: 0; padding: .5rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.text-sm { font-size: .8rem; margin-top: .4rem; }
 
 .section-title { font-size: 1rem; font-weight: 800; margin-bottom: 0; }
 .preds-header {

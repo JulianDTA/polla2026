@@ -111,7 +111,7 @@ router.post('/champion', async (req, res) => {
   }
 
   // Lock champion picks after the first match starts
-  const TOURNAMENT_START = new Date('2026-06-11T19:29:59Z');
+  const TOURNAMENT_START = new Date('2026-06-17T22:00:00-05:00');
   if (new Date() >= TOURNAMENT_START) {
     return res.status(400).json({ error: 'Champion predictions are locked — tournament has started' });
   }

@@ -55,7 +55,7 @@ const saving   = ref(false)
 const editing  = ref(false)
 const error    = ref(null)
 
-const TOURNAMENT_START = new Date('2026-06-11T19:29:59Z')
+const TOURNAMENT_START = new Date('2026-06-17T22:00:00-05:00')
 const locked = computed(() => new Date() >= TOURNAMENT_START)
 
 const filteredTeams = computed(() => {
