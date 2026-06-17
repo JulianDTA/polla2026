@@ -28,6 +28,7 @@ export const getChampionPick  = ()     => api.get('/predictions/champion')
 export const saveChampionPick = (body) => api.post('/predictions/champion', body)
 
 // ── Leaderboard ──────────────────────────────────────────────
-export const getLeaderboard = (limit = 50) => api.get('/leaderboard', { params: { limit } })
+export const getLeaderboard = (limit = 50, group_id = null) => 
+  api.get('/leaderboard', { params: { limit, group_id } })
 
 export default api

@@ -11,7 +11,7 @@
 
     <div v-else>
       <!-- Tabs -->
-      <div class="tabs">
+      <div class="tabs"> 
         <button 
           class="tab-btn" 
           :class="{ active: activeTab === 'past' }"

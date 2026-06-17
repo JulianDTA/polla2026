@@ -4,17 +4,22 @@ const supabase = require('../config/supabase');
 
 /**
  * GET /api/leaderboard
- * Returns the leaderboard view (all users sorted by total_points).
- * Optional query param: limit (default 50)
+ * Get leaderboard for a specific group
  */
 router.get('/', async (req, res) => {
-  try {
-    res.set('Cache-Control', 'no-store');
-    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
+  const limit = parseInt(req.query.limit) || 100;
+  const groupId = req.query.group_id;
 
+  if (!groupId) {
+    return res.status(400).json({ error: 'group_id is required' });
+  }
+
+  try {
     const { data, error } = await supabase
-      .from('leaderboard')
+      .from('group_leaderboard')
       .select('*')
+      .eq('group_id', groupId)
+      .order('rank', { ascending: true })
       .limit(limit);
 
     if (error) throw error;

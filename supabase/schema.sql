@@ -67,6 +67,24 @@ CREATE TABLE IF NOT EXISTS public.champion_predictions (
   updated_at                TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Groups (Private Leagues)
+CREATE TABLE IF NOT EXISTS public.groups (
+  id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name        TEXT        NOT NULL,
+  invite_code TEXT        UNIQUE NOT NULL,
+  owner_id    UUID        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.group_members (
+  id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  group_id    UUID        NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  user_id     UUID        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  joined_at   TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(group_id, user_id)
+);
+
 -- ================================================================
 -- ROW LEVEL SECURITY
 -- ================================================================
@@ -75,6 +93,18 @@ ALTER TABLE public.profiles           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.matches            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.predictions        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.champion_predictions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.groups             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.group_members      ENABLE ROW LEVEL SECURITY;
+
+-- Groups
+CREATE POLICY "groups_select_all" ON public.groups FOR SELECT USING (true);
+CREATE POLICY "groups_insert_auth" ON public.groups FOR INSERT WITH CHECK (auth.uid() = owner_id);
+CREATE POLICY "groups_update_owner" ON public.groups FOR UPDATE USING (auth.uid() = owner_id);
+
+-- Group Members
+CREATE POLICY "members_select_all" ON public.group_members FOR SELECT USING (true);
+CREATE POLICY "members_insert_auth" ON public.group_members FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "members_delete_own" ON public.group_members FOR DELETE USING (auth.uid() = user_id);
 
 -- Profiles
 CREATE POLICY "profiles_select_all"   ON public.profiles FOR SELECT USING (true);
@@ -242,12 +272,13 @@ CREATE OR REPLACE TRIGGER profiles_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 -- ================================================================
--- LEADERBOARD VIEW
+-- LEADERBOARD VIEW (BY GROUP)
 -- ================================================================
 
-CREATE OR REPLACE VIEW public.leaderboard AS
+CREATE OR REPLACE VIEW public.group_leaderboard AS
 SELECT
-  p.id,
+  gm.group_id,
+  p.id as user_id,
   p.username,
   p.full_name,
   p.avatar_url,
@@ -257,9 +288,9 @@ SELECT
   COUNT(DISTINCT pred.id) FILTER (WHERE pred.points_earned = 1)                            AS correct_results,
   COALESCE(cp.predicted_champion, '')                                                       AS champion_pick,
   COALESCE(cp.points_earned, 0)                                                             AS champion_points,
-  RANK() OVER (ORDER BY p.total_points DESC, COUNT(pred.id) FILTER (WHERE pred.points_earned = 3) DESC) AS rank
+  RANK() OVER (PARTITION BY gm.group_id ORDER BY p.total_points DESC, COUNT(pred.id) FILTER (WHERE pred.points_earned = 3) DESC) AS rank
 FROM public.profiles p
+JOIN public.group_members gm ON gm.user_id = p.id
 LEFT JOIN public.predictions pred ON pred.user_id = p.id
 LEFT JOIN public.champion_predictions cp ON cp.user_id = p.id
-GROUP BY p.id, p.username, p.full_name, p.avatar_url, p.total_points, cp.predicted_champion, cp.points_earned
-ORDER BY p.total_points DESC;
+GROUP BY gm.group_id, p.id, p.username, p.full_name, p.avatar_url, p.total_points, cp.predicted_champion, cp.points_earned;

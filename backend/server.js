@@ -8,6 +8,7 @@ const matchesRouter     = require('./src/routes/matches');
 const predictionsRouter = require('./src/routes/predictions');
 const leaderboardRouter = require('./src/routes/leaderboard');
 const adminRouter       = require('./src/routes/admin');
+const groupsRouter      = require('./src/routes/groups');
 
 const app  = express();
 app.set('trust proxy', 1); // Confiar en el proxy de Vercel para express-rate-limit
