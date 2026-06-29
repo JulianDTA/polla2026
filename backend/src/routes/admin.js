@@ -183,6 +183,39 @@ router.get('/cron/sync-live', async (req, res) => {
   }
 });
 
+router.get('/cron/sync-all', async (req, res) => {
+  try {
+    console.log('[Cron] Sync-all running (update brackets and all matches)…');
+    const fixtures = await fifaApi.getAllFixtures();
+    if (!fixtures.length) return res.json({ synced: 0 });
+
+    const BATCH = 50;
+    let total = 0;
+    for (let i = 0; i < fixtures.length; i += BATCH) {
+      const batch = fixtures.slice(i, i + BATCH);
+      const { error } = await supabase
+        .from('matches')
+        .upsert(batch, { onConflict: 'external_id', ignoreDuplicates: false });
+      if (error) throw error;
+      total += batch.length;
+    }
+
+    // Optional: Also recalculate points in case any corrections were made by FIFA
+    const { data: finMatches } = await supabase.from('matches').select('id').eq('status', 'finished');
+    if (finMatches && finMatches.length) {
+      for (const match of finMatches) {
+        await supabase.rpc('calculate_match_points', { p_match_id: match.id });
+      }
+    }
+
+    console.log(`[Cron] sync-all complete — ${total} matches updated`);
+    res.json({ synced: total });
+  } catch (err) {
+    console.error('[Cron] sync-all error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/cron/calculate-points', async (req, res) => {
   try {
     const { data: matches, error: mErr } = await supabase

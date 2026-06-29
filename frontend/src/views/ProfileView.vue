@@ -76,7 +76,8 @@
               <div class="group-name">{{ g.name }}</div>
               <div class="group-code">Código: <strong>{{ g.invite_code }}</strong></div>
             </div>
-            <button class="btn btn-ghost btn-sm text-red" @click="leaveGroup(g.id)">Salir</button>
+            <button v-if="g.owner_id === auth.user?.id" class="btn btn-ghost btn-sm text-red" @click="deleteGroup(g.id)">Eliminar</button>
+            <button v-else class="btn btn-ghost btn-sm text-red" @click="leaveGroup(g.id)">Salir</button>
           </div>
         </div>
 
@@ -228,6 +229,15 @@ async function leaveGroup(groupId) {
   if (!confirm('¿Estás seguro de que quieres abandonar este grupo?')) return
   try {
     await groupsStore.leaveGroup(groupId)
+  } catch (e) {
+    alert(e.message)
+  }
+}
+
+async function deleteGroup(groupId) {
+  if (!confirm('¿Estás seguro de que quieres ELIMINAR este grupo por completo? Esta acción no se puede deshacer.')) return
+  try {
+    await groupsStore.deleteGroup(groupId)
   } catch (e) {
     alert(e.message)
   }

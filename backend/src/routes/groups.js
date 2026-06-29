@@ -157,4 +157,42 @@ router.post('/leave', async (req, res) => {
   }
 });
 
+// Delete a group
+router.delete('/:id', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+
+  const groupId = req.params.id;
+  if (!groupId) return res.status(400).json({ error: 'Group ID is required' });
+
+  try {
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+    if (authErr || !user) return res.status(401).json({ error: 'Unauthorized' });
+
+    // Verify ownership
+    const { data: group } = await supabase
+      .from('groups')
+      .select('owner_id')
+      .eq('id', groupId)
+      .single();
+
+    if (!group) return res.status(404).json({ error: 'Grupo no encontrado' });
+    if (group.owner_id !== user.id) {
+      return res.status(403).json({ error: 'Solo el creador del grupo puede eliminarlo.' });
+    }
+
+    // Delete the group (group_members are deleted automatically via CASCADE)
+    const { error: dErr } = await supabase
+      .from('groups')
+      .delete()
+      .eq('id', groupId);
+
+    if (dErr) throw dErr;
+
+    res.json({ success: true, message: 'Grupo eliminado' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

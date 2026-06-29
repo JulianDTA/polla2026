@@ -62,6 +62,18 @@ export const useGroupsStore = defineStore('groups', {
       } catch (e) {
         throw new Error(e.response?.data?.error || e.message)
       }
+    },
+
+    async deleteGroup(group_id) {
+      try {
+        await api.delete(`/groups/${group_id}`)
+        await this.fetchGroups()
+        if (this.activeGroupId === group_id) {
+          this.activeGroupId = this.groups.length > 0 ? this.groups[0].id : null
+        }
+      } catch (e) {
+        throw new Error(e.response?.data?.error || e.message)
+      }
     }
   }
 })

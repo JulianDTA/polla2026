@@ -93,8 +93,31 @@ const filters = [
   { label: 'Final',            value: 'final'         },
 ]
 
+// Determine active stage based on matches
+function determineActiveStage() {
+  if (!matchesStore.matches.length) return
+  
+  // Find the first stage that has 'live' or 'upcoming' matches
+  const STAGES_ORDER = ['group', 'round_of_32', 'round_of_16', 'quarter_final', 'semi_final', 'final']
+  
+  let foundStage = null
+  for (const stage of STAGES_ORDER) {
+    const hasActive = matchesStore.matches.some(m => m.stage === stage && (m.status === 'upcoming' || m.status === 'live'))
+    if (hasActive) {
+      foundStage = stage
+      break
+    }
+  }
+  
+  // If all matches are finished, default to final
+  activeFilter.value = foundStage || 'final'
+}
+
 // Reload matches when auth state changes (so predictions show/hide)
-onMounted(() => matchesStore.loadMatches())
+onMounted(async () => {
+  await matchesStore.loadMatches()
+  determineActiveStage()
+})
 watch(() => auth.isLoggedIn, () => matchesStore.loadMatches())
 
 const filteredMatches = computed(() =>

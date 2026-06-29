@@ -12,6 +12,10 @@
       "schedule": "0 2 * * *"
     },
     {
+      "path": "/api/admin/cron/sync-all",
+      "schedule": "0 4 * * *"
+    },
+    {
       "path": "/api/admin/cron/calculate-points",
       "schedule": "30 2 * * *"
     }
