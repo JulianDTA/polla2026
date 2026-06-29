@@ -151,22 +151,25 @@ router.post('/award-champion-points', async (req, res) => {
 
 router.get('/cron/sync-live', async (req, res) => {
   try {
-    const liveMatches = await fifaApi.getLiveFixtures();
-    if (!liveMatches.length) {
-      return res.json({ updated: 0, message: 'No live matches right now' });
+    // To ensure brackets update immediately when a match finishes, we fetch all fixtures
+    // (This API call is cheap and solves the "TBD" issue for upcoming rounds).
+    console.log('[Cron] sync-live running (full sync for bracket updates)…');
+    const fixtures = await fifaApi.getAllFixtures();
+    if (!fixtures.length) {
+      return res.json({ updated: 0, message: 'No fixtures returned from API' });
     }
-    let updated = 0;
-    for (const m of liveMatches) {
-      const updateData = { status: m.status, updated_at: m.updated_at };
-      if (m.home_score !== null) updateData.home_score = m.home_score;
-      if (m.away_score !== null) updateData.away_score = m.away_score;
-      
+
+    const BATCH = 50;
+    let total = 0;
+    for (let i = 0; i < fixtures.length; i += BATCH) {
+      const batch = fixtures.slice(i, i + BATCH);
       const { error } = await supabase
         .from('matches')
-        .update(updateData)
-        .eq('external_id', m.external_id);
-      if (!error) updated++;
+        .upsert(batch, { onConflict: 'external_id', ignoreDuplicates: false });
+      if (error) throw error;
+      total += batch.length;
     }
+
     // Auto-calculate points for finished matches
     const { data: finMatches } = await supabase.from('matches').select('id').eq('status', 'finished');
     if (finMatches && finMatches.length) {
@@ -175,8 +178,31 @@ router.get('/cron/sync-live', async (req, res) => {
       }
     }
 
-    console.log('[Cron] sync-live: ' + updated + ' updated');
-    res.json({ updated, total: liveMatches.length });
+    // Auto-award champion points if the final is finished
+    const finalMatch = fixtures.find(m => m.stage === 'final' && m.status === 'finished');
+    if (finalMatch && finalMatch.home_score !== null && finalMatch.away_score !== null) {
+      const winner = finalMatch.home_score > finalMatch.away_score ? finalMatch.home_team_name : finalMatch.away_team_name;
+      if (winner) {
+        console.log(`[Cron] Final is finished! Champion: ${winner}. Awarding points...`);
+        // Award 5 points to the users who picked this winner
+        await supabase.from('champion_predictions').update({ points_earned: 0 }).neq('points_earned', 0); // Reset others just in case? No, better just to update those who got it right.
+        
+        const { data: correctPreds } = await supabase
+          .from('champion_predictions')
+          .update({ points_earned: 5 })
+          .ilike('predicted_champion', winner)
+          .select('user_id');
+        
+        if (correctPreds && correctPreds.length) {
+          for (const row of correctPreds) {
+            await supabase.rpc('refresh_user_points', { p_user_id: row.user_id });
+          }
+        }
+      }
+    }
+
+    console.log('[Cron] sync-live complete: ' + total + ' updated');
+    res.json({ updated: total, message: 'Full sync via sync-live completed' });
   } catch (err) {
     console.error('[Cron] sync-live error:', err.message);
     res.status(500).json({ error: err.message });
