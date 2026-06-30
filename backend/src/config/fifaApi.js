@@ -138,7 +138,7 @@ var fifaApi = {
       if (m.status !== 'finished') return null;
       if (m.home_score > m.away_score) return { id: m.home_team_id, name: m.home_team_name, flag: m.home_team_flag };
       if (m.away_score > m.home_score) return { id: m.away_team_id, name: m.away_team_name, flag: m.away_team_flag };
-      return null; // Draw fallback (should not happen in knockouts if fullTime includes penalty diff)
+      return { id: m.home_team_id, name: m.home_team_name, flag: m.home_team_flag }; // simplistic penalty fallback
     }
 
     const stages = ['round_of_32', 'round_of_16', 'quarter_final', 'semi_final', 'final'];
@@ -147,8 +147,8 @@ var fifaApi = {
       const currentStage = stages[s];
       const nextStage = stages[s + 1];
       
-      const currentMatches = matches.filter(m => m.stage === currentStage).sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
-      const nextMatches = matches.filter(m => m.stage === nextStage).sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
+      const currentMatches = matches.filter(m => m.stage === currentStage).sort((a, b) => parseInt(a.external_id) - parseInt(b.external_id));
+      const nextMatches = matches.filter(m => m.stage === nextStage).sort((a, b) => parseInt(a.external_id) - parseInt(b.external_id));
       
       for (let i = 0; i < currentMatches.length; i++) {
         const winner = getWinner(currentMatches[i]);
