@@ -166,6 +166,26 @@ var fifaApi = {
               nextMatches[nextMatchIndex].away_team_flag = winner.flag;
             }
           }
+          
+          // Push losers to third_place match
+          if (currentStage === 'semi_final') {
+            const loser = m.home_score < m.away_score ? { id: m.home_team_id, name: m.home_team_name, flag: m.home_team_flag }
+                        : m.away_score < m.home_score ? { id: m.away_team_id, name: m.away_team_name, flag: m.away_team_flag }
+                        : { id: m.away_team_id, name: m.away_team_name, flag: m.away_team_flag }; // fallback
+
+            const thirdPlaceMatch = matches.find(x => x.stage === 'third_place');
+            if (thirdPlaceMatch) {
+              if (isHome) {
+                thirdPlaceMatch.home_team_id = loser.id;
+                thirdPlaceMatch.home_team_name = loser.name;
+                thirdPlaceMatch.home_team_flag = loser.flag;
+              } else {
+                thirdPlaceMatch.away_team_id = loser.id;
+                thirdPlaceMatch.away_team_name = loser.name;
+                thirdPlaceMatch.away_team_flag = loser.flag;
+              }
+            }
+          }
         }
       }
     }
