@@ -157,13 +157,17 @@ var fifaApi = {
           const isHome = i % 2 === 0;
           if (nextMatches[nextMatchIndex]) {
             if (isHome) {
-              nextMatches[nextMatchIndex].home_team_id = winner.id;
-              nextMatches[nextMatchIndex].home_team_name = winner.name;
-              nextMatches[nextMatchIndex].home_team_flag = winner.flag;
+              if (nextMatches[nextMatchIndex].home_team_name === 'TBD') {
+                nextMatches[nextMatchIndex].home_team_id = winner.id;
+                nextMatches[nextMatchIndex].home_team_name = winner.name;
+                nextMatches[nextMatchIndex].home_team_flag = winner.flag;
+              }
             } else {
-              nextMatches[nextMatchIndex].away_team_id = winner.id;
-              nextMatches[nextMatchIndex].away_team_name = winner.name;
-              nextMatches[nextMatchIndex].away_team_flag = winner.flag;
+              if (nextMatches[nextMatchIndex].away_team_name === 'TBD') {
+                nextMatches[nextMatchIndex].away_team_id = winner.id;
+                nextMatches[nextMatchIndex].away_team_name = winner.name;
+                nextMatches[nextMatchIndex].away_team_flag = winner.flag;
+              }
             }
           }
           
@@ -176,13 +180,17 @@ var fifaApi = {
             const thirdPlaceMatch = matches.find(x => x.stage === 'third_place');
             if (thirdPlaceMatch) {
               if (isHome) {
-                thirdPlaceMatch.home_team_id = loser.id;
-                thirdPlaceMatch.home_team_name = loser.name;
-                thirdPlaceMatch.home_team_flag = loser.flag;
+                if (thirdPlaceMatch.home_team_name === 'TBD') {
+                  thirdPlaceMatch.home_team_id = loser.id;
+                  thirdPlaceMatch.home_team_name = loser.name;
+                  thirdPlaceMatch.home_team_flag = loser.flag;
+                }
               } else {
-                thirdPlaceMatch.away_team_id = loser.id;
-                thirdPlaceMatch.away_team_name = loser.name;
-                thirdPlaceMatch.away_team_flag = loser.flag;
+                if (thirdPlaceMatch.away_team_name === 'TBD') {
+                  thirdPlaceMatch.away_team_id = loser.id;
+                  thirdPlaceMatch.away_team_name = loser.name;
+                  thirdPlaceMatch.away_team_flag = loser.flag;
+                }
               }
             }
           }
